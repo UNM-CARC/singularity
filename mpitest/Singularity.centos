@@ -6,14 +6,14 @@ Bootstrap: docker
 From: centos:7.3.1611
 
 %post
-	# Wheeler mount points
+    # Wheeler mount points
     mkdir -p /wheeler/scratch
     mkdir -p /nfs/scratch
     yum -y update && yum clean all
     yum groupinstall -y "Development Tools"
     yum -y install \
 	which \
-        curl \ 
+        curl \
         git \
         python-pip \
         python-devel
