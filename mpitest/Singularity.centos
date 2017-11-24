@@ -11,12 +11,12 @@ From: centos:7.3.1611
     mkdir -p /nfs/scratch
     yum -y update && yum clean all
     yum groupinstall -y "Development Tools"
-    yum -y install \
+    yum install -y \
 	which \
         curl \
-        git \
-        python-pip \
-        python-devel
+        git
+    yum install -y epel-release
+    yum install -y python-pip python-devel
     pip install --upgrade pip
     pip install setuptools
 
