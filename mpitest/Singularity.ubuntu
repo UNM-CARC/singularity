@@ -56,9 +56,21 @@ From: ubuntu:latest
     apt-get install -y libtool autoconf automake build-essential ibutils ibverbs-utils rdmacm-utils infiniband-diags perftest librdmacm-dev libibverbs-dev libmlx4-1 numactl libnuma-dev autoconf automake gcc g++ git libtool pkg-config
     apt-get install -y libnl-3-200 libnl-route-3-200 libnl-route-3-dev libnl-utils
 
-    # git, wget
-    apt-get install -y git wget
+    # git, wget, ncurses
+    apt-get install -y git wget libncurses5-dev 
+
+    # openmpi
+    echo "Get and Build openmpi"
+    mkdir -p /usr/local/src
+    cd /usr/local/src
+    wget https://www.open-mpi.org/software/ompi/v2.1/downloads/openmpi-2.1.1.tar.bz2
+    tar -xjf openmpi-2.1.1.tar.bz2
+    cd openmpi-2.1.1
+    ./configure --prefix=/usr/local --with-hwloc
+    make -j4
+    make install
 
 %environment    
-    # path to mlx IB libraries in Ubuntu
-LD_LIBRARY_PATH=/usr/lib/libibverbs:$LD_LIBRARY_PATH
+    # path to mlx IB libraries and openmpi in Ubuntu
+LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/libibverbs:$LD_LIBRARY_PATH
+PATH=/usr/local/bin:$PATH
