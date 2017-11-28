@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# bash$ cd $PBS_O_WORKDIR
+# bash$ bash ./singularity-test-ubuntu.pbs
+#
+# Interactive pbs sessions are useful for debugging, but are not 
+# the preferred way to run production jobs. Once problem is 
+# identified, do submit as normal. 
+
+# Processors per node (ppn), today is synonymous with cores:
+# xena has 16 and wheeler has 8
+#PBS -l nodes=2:ppn=8
+#PBS -l walltime=48:00:00
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -N singularity-test
+
+# Load the environment modules system
+## TODO add to .profile along with umask
+
+module load intel
+module load openmpi-2.1.1-intel-17.0.4-gyecxys
+module load singularity-2.4.1-intel-17.0.4-sjwoqj4
+
+# The variable $PBS_NP is always equal to nodes x ppn as set via -l flag
+# and the following information will be found in the .o file 
+echo -e "\nLaunching $PBS_NP mpi tasks across $PBS_NUM_NODES node(s)." 
+echo -e "The nodes are: $(cat $PBS_NODEFILE | uniq | tr '\n' ' ')\n\n" 
+
+# Change to the directory that this job was submitted from
+# The variable is set to whatever directory you were in when qsub was called
+cd $PBS_O_WORKDIR
+
+echo -e "Starting job $(echo $PBS_JOBID | cut -d"." -f1) on $(date)\n"
+
+# I have redirected output to out.log, which you will be able to check while running. 
+# Otherwise, STDOUT is stored in RAM both consuming RAM and hiding output until the end
+# when the .o file is produced. Feel free to change the name of output to anything you like. 
+mpirun -n $PBS_NP -machinefile $PBS_NODEFILE $PBS_O_WORKDIR/mpi-ring
+
+echo -e "Finishing job $(echo $PBS_JOBID | cut -d"." -f1) on $(date)" 
