@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # bash$ cd $PBS_O_WORKDIR
-# bash$ bash ./singularity-test-ubuntu.pbs
+# bash$ bash ./singularity-test-centos.pbs
 #
 # Interactive pbs sessions are useful for debugging, but are not 
 # the preferred way to run production jobs. Once problem is 
@@ -22,6 +22,29 @@ module load intel
 module load mpich
 module load singularity-2.4.1-intel-17.0.4-sjwoqj4
 
+CONTAINER_REPO=UNM-CARC
+CONTAINER_NAME=singularity-test
+CONTAINER_VER=centos
+CONTAINER=$HOME/my_containers/$(CONTAINER_REPO)-$(CONTAINER_NAME)-$(CONTAINER_VER).simg
+
+# Download the latest CARC fenics container
+if [ ! -e $HOME/my_containers ]
+then
+    echo -e "Creating directory for storing containers."
+    mkdir -p $HOME/my_containers
+fi
+
+if [ ! -e $CONTAINER ]
+then
+    echo -e "Downloading FEniCS singulary container."
+    cd ~/my_containers
+    singularity pull shub://$(CONTAINER_REPO)/$(CONTAINER_NAME):$(CONTAINER_VER)
+fi
+
+# Change to the directory that this job was submitted from
+# The variable is set to whatever directory you were in when qsub was called
+cd $PBS_O_WORKDIR
+
 # The variable $PBS_NP is always equal to nodes x ppn as set via -l flag
 # and the following information will be found in the .o file 
 echo -e "\nLaunching $PBS_NP mpi tasks across $PBS_NUM_NODES node(s)." 
@@ -29,13 +52,11 @@ echo -e "The nodes are: $(cat $PBS_NODEFILE | uniq | tr '\n' ' ')\n\n"
 
 # Change to the directory that this job was submitted from
 # The variable is set to whatever directory you were in when qsub was called
-cd $PBS_O_WORKDIR
-
 echo -e "Starting job $(echo $PBS_JOBID | cut -d"." -f1) on $(date)\n"
 
 # I have redirected output to out.log, which you will be able to check while running. 
 # Otherwise, STDOUT is stored in RAM both consuming RAM and hiding output until the end
 # when the .o file is produced. Feel free to change the name of output to anything you like. 
-mpirun -n $PBS_NP -machinefile $PBS_NODEFILE $SINGULARITY_BIN/singularity exec -B /wheeler -B /opt/intel -B /opt/spack -B /opt/ohpc  /users/bridges/my_containers/UNM-CARC-singularity-master-centos.simg $PBS_O_WORKDIR/mpi-ring-mpich
+mpirun -n $PBS_NP -machinefile $PBS_NODEFILE $SINGULARITY_BIN/singularity exec -B /wheeler/scratch -B /nfs/scratch -B /opt/intel -B /opt/spack -B /opt/ohpc $CONTAINER $PBS_O_WORKDIR/mpi-ring-mpich
 
 echo -e "Finishing job $(echo $PBS_JOBID | cut -d"." -f1) on $(date)" 
